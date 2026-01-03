@@ -17,6 +17,7 @@ class FeaturesLengthExperiment(BaseExperiment):
         outputs = self.dinov3_model(**preprocessed_inputs, output_hidden_states=True)
         
         x = outputs.last_hidden_state
+        print(outputs.keys())
         R = self.dinov3_model.config.num_register_tokens
 
         patch_tokens = x[:, 1 + R:, :]

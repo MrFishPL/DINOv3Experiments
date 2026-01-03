@@ -1,7 +1,7 @@
 import argparse
 import os
 import torch
-from experiments.features_length import FeaturesLengthExperiment
+from experiments import FeaturesLengthExperiment
 from transformers import AutoImageProcessor, AutoModel
 from transformers.image_utils import load_image
 import numpy as np
@@ -27,12 +27,18 @@ def main():
     experiment = FeaturesLengthExperiment(dinov3_model=model, device=DEVICE, name="features_length")
     orig_size = image.size
 
-    inputs = processor(images=image, return_tensors="pt").to(DEVICE)
+    inputs = processor(
+        images=image, 
+        return_tensors="pt",
+        do_resize=False,
+        do_center_crop=False,
+    ).to(DEVICE)
+    
     outputs = experiment.run_dict(inputs)
     feat_map = outputs["norm_feat_lens"].cpu().squeeze().numpy()
 
     feat_map_t = torch.from_numpy(feat_map).unsqueeze(0).unsqueeze(0)
-    upsampled = torch.nn.functional.interpolate(feat_map_t, size=(orig_size[1], orig_size[0]), mode="bilinear", align_corners=False)
+    upsampled = torch.nn.functional.interpolate(feat_map_t, size=(orig_size[1], orig_size[0]), mode="nearest")
     feat_map_img = np.clip(upsampled.squeeze().numpy() * 255, 0, 255).astype(np.uint8)
     img_out = Image.fromarray(feat_map_img)
 
