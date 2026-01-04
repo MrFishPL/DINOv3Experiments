@@ -25,7 +25,7 @@ def main():
     model = AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model.set_attn_implementation('eager')
 
-    experiment = SimilarityExperiment(dinov3_model=model, device=DEVICE, name="features_length")
+    experiment = SimilarityExperiment(dinov3_model=model, device=DEVICE, name="similarity")
     orig_size = image.size
 
     inputs = processor(
