@@ -1,6 +1,6 @@
 # DINOv3 Experiments
 
-A Python library for running visualization experiments with DINOv3 (Vision Transformer) models. This project provides various experiments to analyze and visualize DINOv3 patch tokens, including feature length maps, PCA visualizations, patch similarity maps, and patch matching between images.
+A repo for running visualization experiments with DINOv3 (Vision Transformer) models. This project provides various experiments to analyze and visualize DINOv3 patch tokens, including feature length maps, PCA visualizations, patch similarity maps, and patch matching between images.
 
 ## Features
 
