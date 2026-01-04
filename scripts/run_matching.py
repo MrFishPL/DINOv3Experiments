@@ -8,7 +8,6 @@ from transformers.image_utils import load_image
 from PIL import Image, ImageDraw
 
 def patch_grid_from_inputs(inputs, patch_size: int):
-    # inputs.pixel_values: [B, 3, H, W]
     _, _, H, W = inputs.pixel_values.shape
     Hp, Wp = H // patch_size, W // patch_size
     N = Hp * Wp
@@ -28,14 +27,17 @@ def main():
     DEFAULT_PATH2 = "https://i.guim.co.uk/img/media/327aa3f0c3b8e40ab03b4ae80319064e401c6fbc/377_133_3542_2834/master/3542.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=34d32522f47e4a67286f9894fc81c863"
 
     parser = argparse.ArgumentParser(description="Visualize DINOv3 patch matching between two images.")
-    parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save output image.")
-    parser.add_argument("--input_path1", type=str, default=DEFAULT_PATH1, help="Path or URL to the first input image.")
-    parser.add_argument("--input_path2", type=str, default=DEFAULT_PATH2, help="Path or URL to the second input image.")
-    parser.add_argument("--device", type=str, default="cuda", choices=["mps", "cuda", "cpu"], help="Torch device.")
-    parser.add_argument("--out_name", type=str, default="matching_vis.png", help="Output filename.")
-    parser.add_argument("--max_lines", type=int, default=800, help="Max number of lines to draw (subsample if too many).")
-    parser.add_argument("--seed", type=int, default=0, help="Seed for subsampling.")
+    parser.add_argument("--output_dir", type=str, default="outputs")
+    parser.add_argument("--input_path1", type=str, default=DEFAULT_PATH1)
+    parser.add_argument("--input_path2", type=str, default=DEFAULT_PATH2)
+    parser.add_argument("--device", type=str, default="cuda", choices=["mps", "cuda", "cpu"])
+    parser.add_argument("--out_name", type=str, default="matching_vis.png")
+    parser.add_argument("--max_lines", type=int, default=800)
+    parser.add_argument("--top_k", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
+
+    device = args.device
 
     image1 = load_image(args.input_path1)
     image2 = load_image(args.input_path2)
@@ -43,16 +45,16 @@ def main():
     processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model = AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model.set_attn_implementation("eager")
-    model.to(args.device)
+    model.to(device)
     model.eval()
 
     ps = model.config.patch_size
 
-    inputs1 = processor(images=image1, return_tensors="pt", do_resize=False, do_center_crop=False).to(args.device)
-    inputs2 = processor(images=image2, return_tensors="pt", do_resize=False, do_center_crop=False).to(args.device)
+    inputs1 = processor(images=image1, return_tensors="pt", do_resize=False, do_center_crop=False).to(device)
+    inputs2 = processor(images=image2, return_tensors="pt", do_resize=False, do_center_crop=False).to(device)
 
-    H1, W1, Hp1, Wp1, N1 = patch_grid_from_inputs(inputs1, ps)
-    H2, W2, Hp2, Wp2, N2 = patch_grid_from_inputs(inputs2, ps)
+    _, _, Hp1, Wp1, N1 = patch_grid_from_inputs(inputs1, ps)
+    _, _, Hp2, Wp2, N2 = patch_grid_from_inputs(inputs2, ps)
 
     if N1 <= N2:
         img_small, img_large = image1, image2
@@ -69,19 +71,19 @@ def main():
         small_label = "image2"
         large_label = "image1"
 
-    experiment = MatchingExperiment(dinov3_model=model, device=args.device, name="matching")
+    experiment = MatchingExperiment(dinov3_model=model, device=device, name="matching")
     outputs = experiment.run_dict(preprocessed_inputs1=inp_small, preprocessed_inputs2=inp_large)
     mapping = outputs["matching"].detach().cpu().squeeze(0)
+    scores = outputs["scores"].detach().cpu().squeeze(0)
 
-    if mapping.numel() != Hp_s * Wp_s:
-        raise RuntimeError(
-            f"Unexpected mapping length: got {mapping.numel()}, expected {Hp_s * Wp_s}."
-        )
+    total = Hp_s * Wp_s
+    if mapping.numel() != total or scores.numel() != total:
+        raise RuntimeError(f"Unexpected output length: mapping={mapping.numel()} scores={scores.numel()} expected={total}")
 
     large_h = img_large.height
     small_resized = resize_to_height(img_small, large_h)
     large_resized = img_large
-    
+
     scale_s = small_resized.height / img_small.height
     scale_t = 1.0
 
@@ -94,12 +96,16 @@ def main():
 
     draw = ImageDraw.Draw(canvas, "RGBA")
 
-    random.seed(args.seed)
-    total = Hp_s * Wp_s
-    if args.max_lines is not None and total > args.max_lines:
-        idxs = sorted(random.sample(range(total), args.max_lines))
+    if args.top_k and args.top_k > 0:
+        k = min(args.top_k, total)
+        idxs = torch.topk(scores, k=k, largest=True).indices.tolist()
+        idxs.sort()
     else:
-        idxs = range(total)
+        random.seed(args.seed)
+        if args.max_lines is not None and total > args.max_lines:
+            idxs = sorted(random.sample(range(total), args.max_lines))
+        else:
+            idxs = list(range(total))
 
     x_offset_large = small_resized.width
 
@@ -115,7 +121,7 @@ def main():
         xt = x_offset_large + (ct + 0.5) * ps * scale_t
         yt = (rt + 0.5) * ps * scale_t
 
-        draw.line([(xs, ys), (xt, yt)], fill=(255, 0, 0, 110), width=5)
+        draw.line([(xs, ys), (xt, yt)], fill=(255, 0, 0, 110), width=3)
 
     draw.rectangle([0, 0, canvas_w, 24], fill=(0, 0, 0, 160))
     draw.text((8, 5), f"SMALL={small_label} (left, scaled)  ->  LARGE={large_label} (right)", fill=(255, 255, 255, 220))
