@@ -2,15 +2,16 @@ from experiments.base_experiment import BaseExperiment
 from typing import Sequence, Tuple
 import torch
 from torch import Tensor
+from torch_pca import PCA
 
-class FeaturesLengthExperiment(BaseExperiment):
+class PCAExperiment(BaseExperiment):
     @property
     def input_names(self) -> Sequence[str]:
         return ("preprocessed_inputs",)
 
     @property
     def output_names(self) -> Sequence[str]:
-        return ("norm_feat_lens",)
+        return ("pca",)
 
     @torch.no_grad()
     def forward(self, preprocessed_inputs: Tensor) -> Tuple[Tensor]:
@@ -23,11 +24,16 @@ class FeaturesLengthExperiment(BaseExperiment):
         B, _, H, W = preprocessed_inputs.pixel_values.shape
         ps = self.dinov3_model.config.patch_size
         Hp, Wp = H // ps, W // ps
-        patch_grid = patch_tokens.reshape(B, Hp, Wp, -1)
-        norm_feat_lens = torch.linalg.vector_norm(patch_grid, dim=-1)
-        min_lens = norm_feat_lens.amin(dim=(-2, -1), keepdim=True)
-        max_lens = norm_feat_lens.amax(dim=(-2, -1), keepdim=True)
-        norm_feat_lens = (norm_feat_lens - min_lens) / (max_lens - min_lens + 1e-8)
-        norm_feat_lens = torch.clamp(norm_feat_lens, min=0.0, max=1.0)
         
-        return (norm_feat_lens,)
+        standardized_patch_tokens = (patch_tokens - patch_tokens.mean(dim=1)) / patch_tokens.std(dim=1)
+        
+        pca_model = PCA(n_components=3, svd_solver='full')
+        standardized_transformed = pca_model.fit_transform(standardized_patch_tokens[0])
+        
+        x_min = standardized_transformed.min(dim=0, keepdim=True).values
+        x_max = standardized_transformed.max(dim=0, keepdim=True).values
+        standardized_transformed = (standardized_transformed - x_min) / (x_max - x_min + 1e-8)
+        
+        patch_grid = standardized_transformed.T.reshape(3, Hp, Wp)
+        
+        return (patch_grid,)

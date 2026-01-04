@@ -3,3 +3,4 @@ transformers
 pillow
 torchvision
 accelerate
+torch-pca
