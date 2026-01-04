@@ -13,8 +13,8 @@ A repo for running visualization experiments with DINOv3 (Vision Transformer) mo
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/MrFishPL/DINOExperiments.git
-cd DINOExperiments
+git clone https://github.com/MrFishPL/DINOv3Experiments.git
+cd DINOv3Experiments
 ```
 
 2. Install dependencies:
