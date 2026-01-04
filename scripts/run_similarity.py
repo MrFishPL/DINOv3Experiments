@@ -10,13 +10,12 @@ from PIL import Image
 def main():
     DEFAULT_PATH = "http://images.cocodataset.org/val2017/000000039769.jpg"
 
-    parser = argparse.ArgumentParser(description="Compute and save norm_feat_lens map as an image from a ViT model input, upsampled to original size.")
-    parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save the feature length map image.")
+    parser = argparse.ArgumentParser(description="Compute and save similarity map as an image from a ViT model input, upsampled to original size.")
+    parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save the similarity map image.")
     parser.add_argument("--input_path", type=str, default=DEFAULT_PATH, help="Path or URL to the input image.")
     parser.add_argument("--patch_idx", type=int, required=True, help="Selected patch index.")
+    parser.add_argument("--device", type=str, default="cuda", choices=["mps", "cuda", "cpu"], help="Torch device.")
     args = parser.parse_args()
-
-    DEVICE = "mps"
 
     input_path = args.input_path
     image = load_image(input_path)
@@ -25,7 +24,7 @@ def main():
     model = AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model.set_attn_implementation('eager')
 
-    experiment = SimilarityExperiment(dinov3_model=model, device=DEVICE, name="similarity")
+    experiment = SimilarityExperiment(dinov3_model=model, device=args.device, name="similarity")
     orig_size = image.size
 
     inputs = processor(
@@ -33,7 +32,7 @@ def main():
         return_tensors="pt",
         do_resize=False,
         do_center_crop=False,
-    ).to(DEVICE)
+    ).to(args.device)
     
     outputs = experiment.run_dict(preprocessed_inputs=inputs, patch_idx=args.patch_idx)
     feat_map = outputs["similarity"].cpu().squeeze().numpy()

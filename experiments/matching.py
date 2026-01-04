@@ -12,6 +12,8 @@ from torch import Tensor
 import torch.nn.functional as F
 from torch_linear_assignment import batch_linear_assignment, assignment_to_indices
 
+# TODO: masking
+
 class MatchingExperiment(BaseExperiment):
     @property
     def input_names(self) -> Sequence[str]:

@@ -7,17 +7,6 @@ from transformers import AutoImageProcessor, AutoModel
 from transformers.image_utils import load_image
 from PIL import Image, ImageDraw
 
-
-def get_device(requested: str) -> str:
-    # prosta, praktyczna detekcja
-    req = requested.lower()
-    if req == "mps":
-        return "mps" if torch.backends.mps.is_available() else "cpu"
-    if req == "cuda":
-        return "cuda" if torch.cuda.is_available() else "cpu"
-    return "cpu"
-
-
 def patch_grid_from_inputs(inputs, patch_size: int):
     # inputs.pixel_values: [B, 3, H, W]
     _, _, H, W = inputs.pixel_values.shape
@@ -42,13 +31,11 @@ def main():
     parser.add_argument("--output_dir", type=str, default="outputs", help="Directory to save output image.")
     parser.add_argument("--input_path1", type=str, default=DEFAULT_PATH1, help="Path or URL to the first input image.")
     parser.add_argument("--input_path2", type=str, default=DEFAULT_PATH2, help="Path or URL to the second input image.")
-    parser.add_argument("--device", type=str, default="mps", choices=["mps", "cuda", "cpu"], help="Torch device.")
+    parser.add_argument("--device", type=str, default="cuda", choices=["mps", "cuda", "cpu"], help="Torch device.")
     parser.add_argument("--out_name", type=str, default="matching_vis.png", help="Output filename.")
     parser.add_argument("--max_lines", type=int, default=800, help="Max number of lines to draw (subsample if too many).")
     parser.add_argument("--seed", type=int, default=0, help="Seed for subsampling.")
     args = parser.parse_args()
-
-    device = get_device(args.device)
 
     image1 = load_image(args.input_path1)
     image2 = load_image(args.input_path2)
@@ -56,13 +43,13 @@ def main():
     processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model = AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
     model.set_attn_implementation("eager")
-    model.to(device)
+    model.to(args.device)
     model.eval()
 
     ps = model.config.patch_size
 
-    inputs1 = processor(images=image1, return_tensors="pt", do_resize=False, do_center_crop=False).to(device)
-    inputs2 = processor(images=image2, return_tensors="pt", do_resize=False, do_center_crop=False).to(device)
+    inputs1 = processor(images=image1, return_tensors="pt", do_resize=False, do_center_crop=False).to(args.device)
+    inputs2 = processor(images=image2, return_tensors="pt", do_resize=False, do_center_crop=False).to(args.device)
 
     H1, W1, Hp1, Wp1, N1 = patch_grid_from_inputs(inputs1, ps)
     H2, W2, Hp2, Wp2, N2 = patch_grid_from_inputs(inputs2, ps)
@@ -82,7 +69,7 @@ def main():
         small_label = "image2"
         large_label = "image1"
 
-    experiment = MatchingExperiment(dinov3_model=model, device=device, name="matching")
+    experiment = MatchingExperiment(dinov3_model=model, device=args.device, name="matching")
     outputs = experiment.run_dict(preprocessed_inputs1=inp_small, preprocessed_inputs2=inp_large)
     mapping = outputs["matching"].detach().cpu().squeeze(0)
 
