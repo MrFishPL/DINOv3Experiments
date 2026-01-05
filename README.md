@@ -62,7 +62,7 @@ DINO/
 Compute and visualize normalized feature length maps:
 
 ```bash
-python -m scripts.run_feat_len.py --input_path <image_path> --output_dir outputs --device cuda
+python -m scripts.run_feat_len --input_path <image_path> --output_dir outputs --device cuda
 ```
 
 **Options:**
@@ -77,7 +77,7 @@ python -m scripts.run_feat_len.py --input_path <image_path> --output_dir outputs
 Apply PCA to patch tokens and visualize as RGB image:
 
 ```bash
-python -m scripts.run_pca.py --input_path <image_path> --output_dir outputs --device cuda
+python -m scripts.run_pca --input_path <image_path> --output_dir outputs --device cuda
 ```
 
 **Options:**
@@ -92,7 +92,7 @@ python -m scripts.run_pca.py --input_path <image_path> --output_dir outputs --de
 Compute similarity map between a selected patch and all patches:
 
 ```bash
-python -m scripts.run_similarity.py --input_path <image_path> --patch_idx 0 --output_dir outputs --device cuda
+python -m scripts.run_similarity --input_path <image_path> --patch_idx 0 --output_dir outputs --device cuda
 ```
 
 **Options:**
@@ -108,7 +108,7 @@ python -m scripts.run_similarity.py --input_path <image_path> --patch_idx 0 --ou
 Visualize optimal patch matching between two images:
 
 ```bash
-python -m scripts.run_matching.py --input_path1 <image1> --input_path2 <image2> --output_dir outputs --device cuda
+python -m scripts.run_matching --input_path1 <image1> --input_path2 <image2> --output_dir outputs --device cuda
 ```
 
 **Options:**
