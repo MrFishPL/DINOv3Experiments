@@ -9,6 +9,28 @@ A repo for running visualization experiments with DINOv3 (Vision Transformer) mo
 - **Similarity Experiment**: Compute similarity maps between a selected patch (or CLS token) and all patches
 - **Matching Experiment**: Find optimal patch matching between two images using linear assignment
 
+## Examples
+
+Some example outputs produced by the scripts in this repo:
+
+### Features Length Visualization
+
+![Normalized feature length map](outputs/norm_feat_lens/norm_feat_lens1.png)
+
+### PCA Visualization
+
+![PCA RGB visualization](outputs/pca/pca1.png)
+![PCA single component](outputs/pca/pca2-single-component.png)
+
+### Similarity Maps
+
+![Similarity map (CLS token)](outputs/similarity/similarity1-cls.png)
+![Similarity map (eyes patch)](outputs/similarity/similarity1-eyes.png)
+
+### Patch Matching
+
+![Patch matching top 25](outputs/matching/matching_top25.png)
+
 ## Installation
 
 1. Clone this repository:
