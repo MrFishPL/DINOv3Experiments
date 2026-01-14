@@ -15,21 +15,44 @@ Some example outputs produced by the scripts in this repo:
 
 ### Features Length Visualization
 
-![Normalized feature length map](outputs/norm_feat_lens/norm_feat_lens1.png)
+<div>
+  <img src="outputs/norm_feat_lens/norm_feat_lens1.png" alt="Normalized feature length map 1" height="220" />
+  <img src="outputs/norm_feat_lens/norm_feat_lens2.png" alt="Normalized feature length map 2" height="220" />
+</div>
 
 ### PCA Visualization
 
-![PCA RGB visualization](outputs/pca/pca1.png)
-![PCA single component](outputs/pca/pca2-single-component.png)
+<div>
+  <img src="outputs/pca/pca1.png" alt="PCA RGB visualization 1" height="220" />
+  <img src="outputs/pca/pca2.png" alt="PCA RGB visualization 2" height="220" />
+  <img src="outputs/pca/pca2-single-component.png" alt="PCA single component" height="220" />
+</div>
 
 ### Similarity Maps
 
-![Similarity map (CLS token)](outputs/similarity/similarity1-cls.png)
-![Similarity map (eyes patch)](outputs/similarity/similarity1-eyes.png)
+<div>
+  <img src="outputs/similarity/similarity1-cls.png" alt="Similarity map (CLS token)" height="220" />
+  <img src="outputs/similarity/similarity1-eyes.png" alt="Similarity map (eyes patch)" height="220" />
+  <img src="outputs/similarity/similarity1-head.png" alt="Similarity map (head patch)" height="220" />
+  <img src="outputs/similarity/similarity1-ears.png" alt="Similarity map (ears patch)" height="220" />
+  <img src="outputs/similarity/similarity1-whiskers.png" alt="Similarity map (whiskers patch)" height="220" />
+  <img src="outputs/similarity/similarity2.png" alt="Similarity map 2" height="220" />
+</div>
 
 ### Patch Matching
 
-![Patch matching top 25](outputs/matching/matching_top25.png)
+<div>
+  <img src="outputs/matching/matching_top25.png" alt="Patch matching top 25" height="220" />
+</div>
+
+### Original Inputs
+
+<div>
+  <img src="outputs/original/1.webp" alt="Original input 1" height="220" />
+  <img src="outputs/original/2.jpg" alt="Original input 2" height="220" />
+  <img src="outputs/original/1-matching.jpg" alt="Original input 1 (matching)" height="220" />
+  <img src="outputs/original/2-matching.jpg" alt="Original input 2 (matching)" height="220" />
+</div>
 
 ## Installation
 
